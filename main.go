@@ -16,7 +16,7 @@ import (
 // <bitbar.author>Boris Petersen</bitbar.author>
 // <bitbar.author.github>transacid</bitbar.author.github>
 // <bitbar.desc>Displays the time till next sunset or sunrise.</bitbar.desc>
-// <bitbar.image>https://raw.githubusercontent.com/transacid/sunbar/726e053e51cba20a92270b71b8f3968c18e39b05/screenshot.png</bitbar.image>
+// <bitbar.image>https://raw.githubusercontent.com/transacid/sunbar/main/screenshot.png</bitbar.image>
 // <bitbar.dependencies>go</bitbar.dependencies>
 // <bitbar.abouturl>https://github.com/transacid/sunbar</bitbar.abouturl>
 
