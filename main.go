@@ -1,4 +1,4 @@
-//usr/bin/env go run $0 $@; exit
+// usr/bin/env go run $0 $@; exit
 package main
 
 import (
@@ -12,11 +12,11 @@ import (
 )
 
 // <bitbar.title>Sunrise / Sunset countdown</bitbar.title>
-// <bitbar.version>v1.0</bitbar.version>
+// <bitbar.version>v1.0.0</bitbar.version>
 // <bitbar.author>Boris Petersen</bitbar.author>
 // <bitbar.author.github>transacid</bitbar.author.github>
 // <bitbar.desc>Displays the time till next sunset or sunrise.</bitbar.desc>
-// <bitbar.image>http://www.hosted-somewhere/pluginimage</bitbar.image>
+// <bitbar.image>https://raw.githubusercontent.com/transacid/sunbar/726e053e51cba20a92270b71b8f3968c18e39b05/screenshot.png</bitbar.image>
 // <bitbar.dependencies>go</bitbar.dependencies>
 // <bitbar.abouturl>https://github.com/transacid/sunbar</bitbar.abouturl>
 
