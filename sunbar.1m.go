@@ -7,6 +7,7 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"os/exec"
 	"strconv"
 	"strings"
 	"time"
@@ -24,19 +25,31 @@ import (
 // get your API key for free at https://ipgeolocation.io/
 const API_KEY = "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
 
+// set to true when you want to automatically set darkmode on sunset
+const DARKMODE_SWITCH = false
+
 func main() {
 	data := getData()
 	sunrise := data.Sunrise
 	sunset := data.Sunset
 	now := time.Now()
+	var onOff string
 
 	switch {
 	case sunrise.After(now) && sunset.After(now):
 		fmt.Print(Printer("sunrise", eventDurationFromNow(sunrise), "sunset", eventDurationFromNow(sunset)))
+		onOff = "true"
 	case sunrise.Before(now) && sunset.After(now):
 		fmt.Print(Printer("sunset", eventDurationFromNow(sunset), "sunrise", eventDurationFromNow(sunrise.Add(time.Hour*24))))
+		onOff = "false"
 	case sunrise.Before(now) && sunset.Before(now):
 		fmt.Print(Printer("sunrise", eventDurationFromNow(sunrise.Add(time.Hour*24)), "sunset", eventDurationFromNow(sunset.Add(time.Hour*24))))
+		onOff = "true"
+	}
+
+	if DARKMODE_SWITCH {
+		cmd := exec.Command("osascript", "-e", fmt.Sprintf("tell app \"System Events\" to tell appearance preferences to set dark mode to %s", onOff))
+		cmd.Run()
 	}
 }
 
