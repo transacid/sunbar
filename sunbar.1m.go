@@ -48,8 +48,10 @@ func main() {
 	}
 
 	if DARKMODE_SWITCH {
-		cmd := exec.Command("osascript", "-e", fmt.Sprintf("tell app \"System Events\" to tell appearance preferences to set dark mode to %s", onOff))
-		cmd.Run()
+		dMcmd := exec.Command("osascript", "-e", fmt.Sprintf("tell app \"System Events\" to tell appearance preferences to set dark mode to %s", onOff))
+		dMcmd.Run()
+		nScmd := exec.Command("shortcuts", "run", fmt.Sprintf("nightshift %s", onOff))
+		nScmd.Run()
 	}
 }
 
@@ -110,6 +112,9 @@ func getSunData() Data {
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		panic(err)
+	}
+	if resp.StatusCode != http.StatusOK {
+		panic(fmt.Sprintf("%s\n%s", resp.Status, body))
 	}
 	home, err := os.UserHomeDir()
 	if err != nil {
