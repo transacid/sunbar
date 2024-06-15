@@ -29,7 +29,10 @@ const API_KEY = "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
 const DARKMODE_SWITCH = false
 
 func main() {
-	data := getData()
+	data, err := getData()
+	if err != nil {
+		panic(err)
+	}
 	sunrise := data.Sunrise
 	sunset := data.Sunset
 	now := time.Now()
@@ -59,19 +62,20 @@ func Printer(nowEvent, nowDuration, nextEvent, nextDuration string) string {
 	return fmt.Sprintf(":%s: %s\n---\n:%s: %s | [symbolize = true]", nowEvent, nowDuration, nextEvent, nextDuration)
 }
 
-func getData() Data {
-	var data SunData
+func getData() (sunData, error) {
+	var sdata sunData
+	var data map[string]interface{}
 	home, err := os.UserHomeDir()
 	if err != nil {
-		panic(err)
+		return sdata, err
 	}
 	f, err := os.Open(fmt.Sprintf("%s/.sun.json", home))
 	if err != nil {
-		panic(err)
+		return sdata, err
 	}
 	stat, err := f.Stat()
 	if err != nil {
-		panic(err)
+		return sdata, err
 	}
 	mtime := stat.ModTime()
 	now := time.Now().Truncate(time.Hour * 24)
@@ -81,77 +85,95 @@ func getData() Data {
 		f.Read(res)
 		err = json.Unmarshal(res, &data)
 		if err != nil {
-			panic(err)
+			return sdata, err
 		}
-		var d Data
-		psr, pss := parseDates(data)
-		d.Sunrise = psr
-		d.Sunset = pss
-		return d
+
+		parsedSunrise, parsedSunset, err := parseDates(data)
+		if err != nil {
+			return sdata, err
+		}
+		sdata.Sunrise = parsedSunrise
+		sdata.Sunset = parsedSunset
+		return sdata, nil
 	} else {
-		return getSunData()
+		sdata, err = getSunData()
+		if err != nil {
+			return sdata, err
+		}
+		return sdata, nil
 	}
 }
 
-func getSunData() Data {
-	var data SunData
+func getSunData() (sunData, error) {
+	var sdata sunData
 	req, err := http.NewRequest("GET", "https://api.ipgeolocation.io/astronomy", nil)
 	if err != nil {
-		panic(err)
+		return sdata, err
 	}
-	q := req.URL.Query()
-	q.Add("apiKey", API_KEY)
-	req.URL.RawQuery = q.Encode()
+	qeryString := req.URL.Query()
+	qeryString.Add("apiKey", API_KEY)
+	req.URL.RawQuery = qeryString.Encode()
 
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
-		panic(err)
+		return sdata, err
 	}
 	defer resp.Body.Close()
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		panic(err)
+		return sdata, err
 	}
 	if resp.StatusCode != http.StatusOK {
-		panic(fmt.Sprintf("%s\n%s", resp.Status, body))
+		return sdata, fmt.Errorf("%s\n%s", resp.Status, body)
 	}
 	home, err := os.UserHomeDir()
 	if err != nil {
-		panic(err)
+		return sdata, err
 	}
 	err = os.WriteFile(fmt.Sprintf("%s/.sun.json", home), body, 0600)
 	if err != nil {
-		panic(err)
+		return sdata, err
 	}
-	err = json.Unmarshal(body, &data)
+	var rdata map[string]interface{}
+	err = json.Unmarshal(body, &rdata)
 	if err != nil {
-		panic(err)
+		return sdata, err
 	}
-	var d Data
-	psr, pss := parseDates(data)
-	d.Sunrise = psr
-	d.Sunset = pss
-	return d
+
+	sunrise, sunset, err := parseDates(rdata)
+	if err != nil {
+		return sdata, err
+	}
+	sdata.Sunrise = sunrise
+	sdata.Sunset = sunset
+	return sdata, nil
 }
 
-func parseDates(body SunData) (time.Time, time.Time) {
-	var sunrise HourMinute
-	var sunset HourMinute
-	srs := strings.Split(body.Sunrise, ":")
-	sts := strings.Split(body.Sunset, ":")
-	srhi, _ := strconv.ParseInt(srs[0], 10, 0)
-	srmi, _ := strconv.ParseInt(srs[1], 10, 0)
-	sshi, _ := strconv.ParseInt(sts[0], 10, 0)
-	ssmi, _ := strconv.ParseInt(sts[1], 10, 0)
-	sunrise.h = int(srhi)
-	sunrise.m = int(srmi)
-	sunset.h = int(sshi)
-	sunset.m = int(ssmi)
-	n := time.Now()
-	sunr := time.Date(n.Year(), n.Month(), n.Day(), sunrise.h, sunrise.m, 0, 0, time.Local)
-	suns := time.Date(n.Year(), n.Month(), n.Day(), sunset.h, sunset.m, 0, 0, time.Local)
-	return sunr, suns
+func parseDates(dates map[string]interface{}) (time.Time, time.Time, error) {
+	sunRiseSplit := strings.Split(dates["sunrise"].(string), ":")
+	sunSetSplit := strings.Split(dates["sunset"].(string), ":")
+	sunRiseHour, err := strconv.Atoi(sunRiseSplit[0])
+	if err != nil {
+		return time.Time{}, time.Time{}, err
+	}
+	SunRiseMinute, err := strconv.Atoi(sunRiseSplit[1])
+	if err != nil {
+		return time.Time{}, time.Time{}, err
+	}
+	sunSetHour, err := strconv.Atoi(sunSetSplit[0])
+	if err != nil {
+		return time.Time{}, time.Time{}, err
+	}
+	sunSetMinute, err := strconv.Atoi(sunSetSplit[1])
+	if err != nil {
+		return time.Time{}, time.Time{}, err
+	}
+
+	now := time.Now()
+	sunrise := time.Date(now.Year(), now.Month(), now.Day(), sunRiseHour, SunRiseMinute, 0, 0, time.Local)
+	sunset := time.Date(now.Year(), now.Month(), now.Day(), sunSetHour, sunSetMinute, 0, 0, time.Local)
+	return sunrise, sunset, nil
 }
 
 func eventDurationFromNow(event time.Time) string {
@@ -166,17 +188,7 @@ func eventDurationFromNow(event time.Time) string {
 	}
 }
 
-type SunData struct {
-	Sunrise string `json:"sunrise"`
-	Sunset  string `json:"sunset"`
-}
-
-type HourMinute struct {
-	h int
-	m int
-}
-
-type Data struct {
+type sunData struct {
 	Sunrise time.Time
 	Sunset  time.Time
 }
