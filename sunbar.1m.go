@@ -199,7 +199,7 @@ type sunData struct {
 	Sunset  time.Time
 }
 
-func getLocation() (lat, long string, err error) {
+func getLocation() (string, string, error) {
 	resp, err := http.Get("https://ifconfig.co/json")
 	if err != nil {
 		return "", "", err
@@ -215,5 +215,8 @@ func getLocation() (lat, long string, err error) {
 		return "", "", err
 	}
 
-	return data["latitude"].(string), data["longitude"].(string), nil
+	lat := strconv.FormatFloat(data["latitude"].(float64), 'f', 2, 64)
+	long := strconv.FormatFloat(data["longitude"].(float64), 'f', 2, 64)
+
+	return lat, long, nil
 }
