@@ -1,4 +1,4 @@
-//usr/bin/env go run $0 $@; exit
+// usr/bin/env go run $0 $@; exit
 package main
 
 import (
@@ -105,6 +105,10 @@ func getData() (sunData, error) {
 }
 
 func getSunData() (sunData, error) {
+	lat, long, err := getLocation()
+	if err != nil {
+		return sunData{}, err
+	}
 	var sdata sunData
 	req, err := http.NewRequest("GET", "https://api.ipgeolocation.io/astronomy", nil)
 	if err != nil {
@@ -112,6 +116,8 @@ func getSunData() (sunData, error) {
 	}
 	qeryString := req.URL.Query()
 	qeryString.Add("apiKey", API_KEY)
+	qeryString.Add("lat", lat)
+	qeryString.Add("long", long)
 	req.URL.RawQuery = qeryString.Encode()
 
 	client := &http.Client{}
@@ -191,4 +197,23 @@ func eventDurationFromNow(event time.Time) string {
 type sunData struct {
 	Sunrise time.Time
 	Sunset  time.Time
+}
+
+func getLocation() (lat, long string, err error) {
+	resp, err := http.Get("https://ifconfig.co/json")
+	if err != nil {
+		return "", "", err
+	}
+	defer resp.Body.Close()
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return "", "", err
+	}
+	var data map[string]interface{}
+	err = json.Unmarshal(body, &data)
+	if err != nil {
+		return "", "", err
+	}
+
+	return data["latitude"].(string), data["longitude"].(string), nil
 }
