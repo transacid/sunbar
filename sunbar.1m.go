@@ -114,11 +114,11 @@ func getSunData() (sunData, error) {
 	if err != nil {
 		return sdata, err
 	}
-	qeryString := req.URL.Query()
-	qeryString.Add("apiKey", API_KEY)
-	qeryString.Add("lat", lat)
-	qeryString.Add("long", long)
-	req.URL.RawQuery = qeryString.Encode()
+	queryString := req.URL.Query()
+	queryString.Add("apiKey", API_KEY)
+	queryString.Add("lat", lat)
+	queryString.Add("long", long)
+	req.URL.RawQuery = queryString.Encode()
 
 	client := &http.Client{}
 	resp, err := client.Do(req)
