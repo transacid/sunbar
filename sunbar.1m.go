@@ -64,7 +64,7 @@ func Printer(nowEvent, nowDuration, nextEvent, nextDuration string) string {
 
 func getData() (sunData, error) {
 	var sdata sunData
-	var data map[string]interface{}
+	var data map[string]any
 	home, err := os.UserHomeDir()
 	if err != nil {
 		return sdata, err
@@ -141,7 +141,7 @@ func getSunData() (sunData, error) {
 	if err != nil {
 		return sdata, err
 	}
-	var rdata map[string]interface{}
+	var rdata map[string]any
 	err = json.Unmarshal(body, &rdata)
 	if err != nil {
 		return sdata, err
@@ -156,7 +156,7 @@ func getSunData() (sunData, error) {
 	return sdata, nil
 }
 
-func parseDates(dates map[string]interface{}) (time.Time, time.Time, error) {
+func parseDates(dates map[string]any) (time.Time, time.Time, error) {
 	sunRiseSplit := strings.Split(dates["sunrise"].(string), ":")
 	sunSetSplit := strings.Split(dates["sunset"].(string), ":")
 	sunRiseHour, err := strconv.Atoi(sunRiseSplit[0])
