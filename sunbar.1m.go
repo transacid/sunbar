@@ -64,7 +64,7 @@ func Printer(nowEvent, nowDuration, nextEvent, nextDuration string) string {
 
 func getData() (sunData, error) {
 	var sdata sunData
-	var data map[string]any
+	var data map[string]map[string]any
 	home, err := os.UserHomeDir()
 	if err != nil {
 		return sdata, err
@@ -110,7 +110,7 @@ func getSunData() (sunData, error) {
 		return sunData{}, err
 	}
 	var sdata sunData
-	req, err := http.NewRequest("GET", "https://api.ipgeolocation.io/astronomy", nil)
+	req, err := http.NewRequest("GET", "https://api.ipgeolocation.io/v2/astronomy", nil)
 	if err != nil {
 		return sdata, err
 	}
@@ -141,7 +141,7 @@ func getSunData() (sunData, error) {
 	if err != nil {
 		return sdata, err
 	}
-	var rdata map[string]any
+	var rdata map[string]map[string]any
 	err = json.Unmarshal(body, &rdata)
 	if err != nil {
 		return sdata, err
@@ -156,9 +156,9 @@ func getSunData() (sunData, error) {
 	return sdata, nil
 }
 
-func parseDates(dates map[string]any) (time.Time, time.Time, error) {
-	sunRiseSplit := strings.Split(dates["sunrise"].(string), ":")
-	sunSetSplit := strings.Split(dates["sunset"].(string), ":")
+func parseDates(dates map[string]map[string]any) (time.Time, time.Time, error) {
+	sunRiseSplit := strings.Split(dates["astronomy"]["sunrise"].(string), ":")
+	sunSetSplit := strings.Split(dates["astronomy"]["sunset"].(string), ":")
 	sunRiseHour, err := strconv.Atoi(sunRiseSplit[0])
 	if err != nil {
 		return time.Time{}, time.Time{}, err
